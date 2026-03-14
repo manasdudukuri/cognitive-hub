@@ -1,10 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Initialize Gemini API
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize Gemini API lazily to prevent crashing the app on load if API key is missing
+const getAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is not set. Please set it in your environment variables via Vercel dashboard.");
+  }
+  return new GoogleGenAI({ apiKey: apiKey || '' });
+};
 
 export async function generateFlashcardsFromText(text: string, topic: string) {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `You are a flashcard generator. Extract or generate flashcards from the following text about the topic "${topic}".
@@ -40,6 +47,7 @@ export async function generateFlashcardsFromText(text: string, topic: string) {
 }
 export async function generatePlanFromPdf(base64Data: string, mimeType: string) {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: {
@@ -86,6 +94,7 @@ export async function generateDeliberatePracticeProblem(topic: string, contextFl
   try {
     const flashcardsContext = contextFlashcards.map(f => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n');
     
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3.1-pro-preview",
       contents: `You are an expert tutor. Create a deliberate practice problem for the topic "${topic}".
@@ -126,3 +135,4 @@ export async function generateDeliberatePracticeProblem(topic: string, contextFl
     throw error;
   }
 }
+
