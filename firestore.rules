@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+
+    function isValidString(field, minLen, maxLen) {
+      return request.resource.data[field] is string && 
+             request.resource.data[field].size() >= minLen && 
+             request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) || 
+             request.resource.data[field] == null ||
+             (request.resource.data[field] is string && 
+              request.resource.data[field].size() >= minLen && 
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidNumber(field) {
+      return request.resource.data[field] is number;
+    }
+
+    function isValidOptionalNumber(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == null || request.resource.data[field] is number;
+    }
+
+    function isValidBoolean(field) {
+      return request.resource.data[field] is bool;
+    }
+
+    // Validators
+    function isValidUserProfile() {
+      return hasOnlyAllowedFields(['email', 'displayName', 'photoURL', 'streak', 'lastStudyDate', 'pomodoroSessionsToday', 'dailyTimeLimit']) &&
+             isValidOptionalString('email', 0, 255) &&
+             isValidOptionalString('displayName', 0, 255) &&
+             isValidOptionalString('photoURL', 0, 2000) &&
+             isValidNumber('streak') &&
+             isValidNumber('pomodoroSessionsToday') &&
+             isValidNumber('dailyTimeLimit') &&
+             isValidOptionalNumber('lastStudyDate');
+    }
+
+    function isValidSkill() {
+      return hasOnlyAllowedFields(['id', 'name', 'level', 'xp', 'description', 'category', 'difficulty', 'masteryGoal', 'parentId', 'deletedAt']) &&
+             isValidString('id', 1, 100) &&
+             isValidString('name', 1, 100) &&
+             isValidNumber('level') &&
+             isValidNumber('xp') &&
+             isValidOptionalString('description', 0, 1000) &&
+             isValidOptionalString('category', 0, 100) &&
+             isValidOptionalNumber('difficulty') &&
+             isValidOptionalNumber('masteryGoal') &&
+             isValidOptionalString('parentId', 0, 100) &&
+             isValidOptionalNumber('deletedAt');
+    }
+
+    function isValidFlashcard() {
+      return hasOnlyAllowedFields(['id', 'topic', 'type', 'question', 'answer', 'codeSnippet', 'diagramUrl', 'nextReview', 'interval', 'easeFactor', 'repetitions']) &&
+             isValidString('id', 1, 100) &&
+             isValidString('topic', 1, 100) &&
+             isValidString('type', 1, 50) &&
+             isValidString('question', 1, 5000) &&
+             isValidString('answer', 1, 5000) &&
+             isValidOptionalString('codeSnippet', 0, 5000) &&
+             isValidOptionalString('diagramUrl', 0, 1000) &&
+             isValidNumber('nextReview') &&
+             isValidNumber('interval') &&
+             isValidNumber('easeFactor') &&
+             isValidNumber('repetitions');
+    }
+
+    function isValidMistake() {
+      return hasOnlyAllowedFields(['id', 'problem', 'incorrectAnswer', 'correctSolution', 'explanation', 'type', 'date', 'reviewed']) &&
+             isValidString('id', 1, 100) &&
+             isValidString('problem', 1, 5000) &&
+             isValidString('incorrectAnswer', 1, 5000) &&
+             isValidString('correctSolution', 1, 5000) &&
+             isValidString('explanation', 1, 5000) &&
+             isValidString('type', 1, 50) &&
+             isValidNumber('date') &&
+             isValidBoolean('reviewed');
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile();
+      allow update: if isOwner(userId) && isValidUserProfile();
+      allow delete: if false;
+
+      match /skills/{skillId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSkill();
+        allow update: if isOwner(userId) && isValidSkill();
+        allow delete: if isOwner(userId);
+      }
+
+      match /flashcards/{flashcardId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidFlashcard();
+        allow update: if isOwner(userId) && isValidFlashcard();
+        allow delete: if isOwner(userId);
+      }
+
+      match /mistakes/{mistakeId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidMistake();
+        allow update: if isOwner(userId) && isValidMistake();
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

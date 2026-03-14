@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User's core profile and study settings",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "streak": { "type": "number" },
+        "lastStudyDate": { "type": "number" },
+        "pomodoroSessionsToday": { "type": "number" },
+        "dailyTimeLimit": { "type": "number" }
+      },
+      "required": ["email", "streak", "pomodoroSessionsToday", "dailyTimeLimit"]
+    },
+    "Skill": {
+      "title": "Skill",
+      "description": "A skill or subject the user is learning",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "level": { "type": "number" },
+        "xp": { "type": "number" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "number" },
+        "masteryGoal": { "type": "number" },
+        "parentId": { "type": "string" },
+        "deletedAt": { "type": "number" }
+      },
+      "required": ["name", "level", "xp"]
+    },
+    "Flashcard": {
+      "title": "Flashcard",
+      "description": "A flashcard for spaced repetition",
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string" },
+        "type": { "type": "string" },
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "codeSnippet": { "type": "string" },
+        "diagramUrl": { "type": "string" },
+        "nextReview": { "type": "number" },
+        "interval": { "type": "number" },
+        "easeFactor": { "type": "number" },
+        "repetitions": { "type": "number" }
+      },
+      "required": ["topic", "type", "question", "answer", "nextReview", "interval", "easeFactor", "repetitions"]
+    },
+    "Mistake": {
+      "title": "Mistake",
+      "description": "A recorded mistake for review",
+      "type": "object",
+      "properties": {
+        "problem": { "type": "string" },
+        "incorrectAnswer": { "type": "string" },
+        "correctSolution": { "type": "string" },
+        "explanation": { "type": "string" },
+        "type": { "type": "string" },
+        "date": { "type": "number" },
+        "reviewed": { "type": "boolean" }
+      },
+      "required": ["problem", "incorrectAnswer", "correctSolution", "explanation", "type", "date", "reviewed"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile data"
+    },
+    "/users/{userId}/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/Skill" },
+      "description": "User's skills"
+    },
+    "/users/{userId}/flashcards/{flashcardId}": {
+      "schema": { "$ref": "#/entities/Flashcard" },
+      "description": "User's flashcards"
+    },
+    "/users/{userId}/mistakes/{mistakeId}": {
+      "schema": { "$ref": "#/entities/Mistake" },
+      "description": "User's mistakes"
+    }
+  }
+}
